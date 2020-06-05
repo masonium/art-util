@@ -1,7 +1,11 @@
 use nalgebra as na;
 
-pub fn refract_dir(incident: &na::Vector2<f32>, normal: &na::Vector2<f32>, n1: f32, n2: f32) -> Option<na::Vector2<f32>> {
-
+pub fn refract_dir(
+    incident: &na::Vector2<f32>,
+    normal: &na::Vector2<f32>,
+    n1: f32,
+    n2: f32,
+) -> Option<na::Vector2<f32>> {
     let cos_ti = normal.dot(incident) / (normal.norm() * incident.norm());
     let n = n1 / n2;
     let sin_tr = n * (1.0 - cos_ti * cos_ti).sqrt();
