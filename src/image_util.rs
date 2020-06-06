@@ -1,35 +1,35 @@
 use std::path::Path;
 
-use nalgebra::{Vector4};
+use nalgebra::Vector4;
 use num_traits::Zero;
 
 #[derive(Debug)]
 pub enum ReadImageError {
     ImageError(image::ImageError),
-    FormatError
+    FormatError,
 }
 
 impl std::fmt::Display for ReadImageError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-	match self {
-	    Self::ImageError(e) => write!(f, "ImageError: {}", e),
-	    Self::FormatError => write!(f, "image could not be read in desired format")
-	}
+        match self {
+            Self::ImageError(e) => write!(f, "ImageError: {}", e),
+            Self::FormatError => write!(f, "image could not be read in desired format"),
+        }
     }
 }
 
 impl std::error::Error for ReadImageError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-	match self {
-	    Self::ImageError(e) => Some(e),
-	    _ => None
-	}
+        match self {
+            Self::ImageError(e) => Some(e),
+            _ => None,
+        }
     }
 }
 
 impl From<image::ImageError> for ReadImageError {
     fn from(e: image::ImageError) -> ReadImageError {
-	ReadImageError::ImageError(e)
+        ReadImageError::ImageError(e)
     }
 }
 
@@ -72,9 +72,7 @@ pub fn read_rgba_image_to_array<P: AsRef<Path>>(
             });
 
             Ok(arr)
-        },
-	_ => {
-	    Err(ReadImageError::FormatError)
-	}
+        }
+        _ => Err(ReadImageError::FormatError),
     }
 }

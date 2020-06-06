@@ -39,15 +39,15 @@ impl PoissonSampling {
             rr_dist: Uniform::new(r * r, 4.0 * r * r),
             theta_dist: Uniform::new(0.0, 2.0 * std::f32::consts::PI),
 
-            w: w,
-            h: h,
+            w,
+            h,
 
             uw: Uniform::new(0.0, w),
             uh: Uniform::new(0.0, h),
 
-            points: points,
-            active_list: active_list,
-            grid_accel: grid_accel,
+            points,
+            active_list,
+            grid_accel,
         }
     }
 
