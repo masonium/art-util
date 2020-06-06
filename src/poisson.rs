@@ -56,7 +56,7 @@ impl PoissonSampling {
         2.0 * (w * h * 1.12 / (n as f32 * std::f32::consts::PI)).sqrt()
     }
 
-    fn random_annulus<R: Rng>(&self, r: &mut R, p: &na::Point2<f32>) -> na::Point2<f32> {
+    fn random_annulus<R: Rng>(&self, r: &mut R, p: na::Point2<f32>) -> na::Point2<f32> {
         let u = r.sample(self.rr_dist).sqrt();
         let v = r.sample(self.theta_dist);
 
@@ -81,13 +81,13 @@ impl PoissonSampling {
     }
 
     pub fn next_sample<R: Rng>(&mut self, r: &mut R) -> Option<na::Point2<f32>> {
-        if self.points.len() == 0 {
+        if self.points.is_empty() {
             let p = na::Point2::new(r.sample(&self.uw), r.sample(&self.uh));
             self.add_point(p);
             return Some(p);
         }
 
-        while self.active_list.len() > 0 {
+        while !self.active_list.is_empty() {
             // grab a random active point
             let i = r.sample(Uniform::new(0, self.active_list.len()));
             let p = self.points[self.active_list[i]];
@@ -96,7 +96,7 @@ impl PoissonSampling {
 
             'point_loop: for _ in 0..k {
                 // sample a point within
-                let p_new = self.random_annulus(r, &p);
+                let p_new = self.random_annulus(r, p);
                 // println!("Distance {} from active point", (p_new-p).dot(&(p_new-p)).sqrt());
 
                 if p_new.x < 0.0 || p_new.x >= self.w || p_new.y < 0.0 || p_new.y >= self.h {

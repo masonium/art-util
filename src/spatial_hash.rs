@@ -58,7 +58,7 @@ impl<F: Scalar + Float + SimdRealField + TryFrom<u16> + Debug> SpatialHash2D<F> 
             sn: sn.try_into().ok().unwrap(),
             sn_i: sn,
             points: vec![],
-            grid_accel: grid_accel,
+            grid_accel,
         }
     }
 
