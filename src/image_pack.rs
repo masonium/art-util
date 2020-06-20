@@ -1,8 +1,8 @@
 //! Pack and unpack data between flat vectors of base components to
 //! 'ndarray's of fixed-size vectors.
 use nalgebra::{DimName, VectorN};
-use ndarray as nd;
 use nd::prelude::*;
+use ndarray as nd;
 use ndarray::{IntoDimension, Ix};
 use std::fmt::Debug;
 use std::iter::{FromIterator, IntoIterator};
@@ -100,10 +100,7 @@ macro_rules! define_unpack_func {
         pub fn $func_name<T: Debug + Copy + PartialEq + 'static>(
             data: Vec<T>,
             dim: $image_dim,
-        ) -> Result<
-            nd::Array<VectorN<T, $pdim_type>, Dim<[Ix; <$image_dim>::DIM]>>,
-            PackImageError,
-        >
+        ) -> Result<nd::Array<VectorN<T, $pdim_type>, Dim<[Ix; <$image_dim>::DIM]>>, PackImageError>
         where
             nalgebra::DefaultAllocator: nalgebra::base::allocator::Allocator<T, $pdim_type>,
         {

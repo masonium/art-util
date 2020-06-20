@@ -1,3 +1,5 @@
+pub mod easing;
+mod fn_gen;
 mod image_pack;
 mod image_util;
 mod math;
@@ -18,3 +20,5 @@ pub use math::refract_dir;
 pub use models::add_box;
 pub use poisson::PoissonSampling;
 pub use spatial_hash::SpatialHash2D;
+
+pub use fn_gen::gen_dated_filenames;
