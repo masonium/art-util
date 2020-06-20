@@ -1,5 +1,4 @@
 //! Implement various easing functions via traits
-use assert_approx_eq::assert_approx_eq;
 use num_traits::cast::AsPrimitive;
 use num_traits::Float;
 
@@ -41,7 +40,8 @@ pub fn inv_lerp<F: Float>(z: F, a: F, b: F) -> F {
     (z - a) / (b - a)
 }
 
-/// The `Easing` trait represents a function that can be used to transition from `a` to `b`.
+/// The `Easing` trait represents a function that can be used to
+/// transition from `a` to `b`.
 pub trait Easing<F: Float + 'static>
 where
     f64: AsPrimitive<F>,
@@ -58,12 +58,12 @@ where
 
     fn ease_in(t: F, begin: F, end: F) -> F {
         let z = Self::map_unity(t);
-        lerp::<F, F>(z, begin, end)
+        lerp(z, begin, end)
     }
 
     fn ease_out(t: F, begin: F, end: F) -> F {
         let z = F::one() - Self::map_unity(F::one() - t);
-        lerp::<F, F>(z, begin, end)
+        lerp(z, begin, end)
     }
 
     fn ease_in_out(t: F, begin: F, end: F) -> F {
@@ -76,12 +76,12 @@ where
                 F::one() + Self::map_unity(two * (t - half))
             };
 
-        lerp::<F, F>(z, begin, end)
+        lerp(z, begin, end)
     }
 }
 
 macro_rules! impl_easing {
-    ($name:ident, $var:ident, $fn_impl: expr) => {
+    ($name:ident, |$var:ident| $fn_impl: expr) => {
         pub struct $name;
         impl<F: Float + 'static> Easing<F> for $name
         where
@@ -94,16 +94,17 @@ macro_rules! impl_easing {
     };
 }
 
-impl_easing!(Linear, t, t);
-impl_easing!(Quad, t, t * t);
-impl_easing!(Cubic, t, t * t * t);
-impl_easing!(Quintic, t, t * t * t * t * t);
-impl_easing!(Sine, t, {
+impl_easing!(Linear, |t| t);
+impl_easing!(Quad, |t| t * t);
+impl_easing!(Cubic, |t| t * t * t);
+impl_easing!(Quintic, |t| t * t * t * t * t);
+impl_easing!(Sine, |t| {
     let half_pi = std::f64::consts::FRAC_PI_2.as_();
     F::one() - (t * half_pi).cos()
 });
-
-impl_easing!(Circle, t, { F::one() - (F::one() - t * t).sqrt() });
+impl_easing!(Circle, |t| {
+    F::one() - (F::one() - t * t).sqrt()
+});
 
 // pub struct Linear;
 // impl<F: Float> Easing<F> for Linear {
@@ -115,8 +116,10 @@ impl_easing!(Circle, t, { F::one() - (F::one() - t * t).sqrt() });
 //     fn map_unity(t: F) -> F { t*t }
 // }
 
+#[cfg(test)]
 mod test {
     use super::*;
+    use assert_approx_eq::assert_approx_eq;
 
     #[test]
     fn test_lerp() {
