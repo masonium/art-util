@@ -17,21 +17,35 @@ impl<F: Float, T> Easeable<F> for T where T: std::ops::Mul<F>, <T as std::ops::M
 
 /// Perform a linear interpolation from `a` to `b` by `x`, where x is
 /// typically in the range [0.0, 1.0].
+///
+/// Type genericity allows you to use lerp in combination with the
+/// easing functions to ease over vectors or other types.
+///
+/// # Examples
+/// ```
+/// # use art_util::easing::{lerp, Quad, Easing};
+/// use nalgebra as na;
+/// use assert_approx_eq::assert_approx_eq;
+///
+/// let a = na::Vector2::new(0.0, 3.0);
+/// let b = na::Vector2::new(3.0, 0.0);
+/// let c: na::Vector2<f32> = lerp(Quad::ease_in_u(0.5), &a, &b);
+/// assert_approx_eq!(c.x, 0.75);
+/// assert_approx_eq!(c.y, 2.25);
+/// ```
 pub fn lerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> 
     <T as Easeable<F>>::Output
 {
     <T as Easeable<F>>::lerp(x, a, b)
 }
 
-/// Perform a linear interpolation, where the `x` values is clamped to
-/// [0.0, 1.0]. Equivalent to lerp(clamp(x, 0.0, 1.0), a, b)
-pub fn clerp<F: Float, T: std::ops::Mul<F>>(x: F, a: T, b: T) -> 
-    <<T as std::ops::Mul<F>>::Output as std::ops::Add>::Output
-where
-    <T as std::ops::Mul<F>>::Output: std::ops::Add,
+/// Clamped linear interpolation, where the `x` values is clamped to
+/// [0.0, 1.0]. Equivalent to `lerp(clamp(x, 0.0, 1.0), a, b)`
+pub fn clerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> 
+    <T as Easeable<F>>::Output
 {
     let t = num::clamp(x, F::zero(), F::one());
-    a * (F::one() - t) + b * t
+    <T as Easeable<F>>::lerp(t, a, b)
 }
 
 /// Perform the inverse lerp on the first argument z.
@@ -51,16 +65,24 @@ where
     /// interval.
     ///
     /// For any sensible easing function, map_unity(0.0) == 0.0 and
-    /// map_unity(1.0) == 1.0). For most easing functions, `map_unity`
+    /// map_unity(1.0) == 1.0). Furthermore:
+    ///
+    /// * For most easing functions, `map_unity`
     /// will be monotonically increasing, but this is not always the
     /// case.
+    /// * `map_unity` corresponds directly to the ease-in transformation, so typically
+    /// the derivative at 0.0 will be small, if not 0.0.
     fn map_unity(t: F) -> F;
 
+    /// Transform t in [0.0, 1.0] to the range [`begin`, `end`], with
+    /// the output values accelerating towards `end` as t increases.
     fn ease_in(t: F, begin: F, end: F) -> F {
         let z = Self::map_unity(t);
         lerp(z, begin, end)
     }
 
+    /// Transform t in [0.0, 1.0] to the range [`begin`, `end`], with
+    /// the output values decelerating towards `end` as t increases.
     fn ease_out(t: F, begin: F, end: F) -> F {
         let z = F::one() - Self::map_unity(F::one() - t);
         lerp(z, begin, end)
@@ -77,6 +99,21 @@ where
             };
 
         lerp(z, begin, end)
+    }
+
+    /// Equivalent to `ease_in(t, 0.0, 1.0)`.
+    fn ease_in_u(t: F) -> F {
+	Self::ease_in(t, F::zero(), F::one())
+    }
+
+    /// Equivalent to `ease_out(t, 0.0, 1.0)`.
+    fn ease_out_u(t: F) -> F {
+	Self::ease_out(t, F::zero(), F::one())
+    }
+
+    /// Equivalent to `ease_in_out(t, 0.0, 1.0)`.
+    fn ease_in_out_u(t: F) -> F {
+	Self::ease_in_out(t, F::zero(), F::one())
     }
 }
 
@@ -105,16 +142,6 @@ impl_easing!(Sine, |t| {
 impl_easing!(Circle, |t| {
     F::one() - (F::one() - t * t).sqrt()
 });
-
-// pub struct Linear;
-// impl<F: Float> Easing<F> for Linear {
-//     fn map_unity(t: F) -> F { t }
-// }
-
-// pub struct Quad;
-// impl<F: Float> Easing<F> for Quad {
-//     fn map_unity(t: F) -> F { t*t }
-// }
 
 #[cfg(test)]
 mod test {
