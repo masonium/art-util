@@ -3,9 +3,10 @@ mod fn_gen;
 mod image_pack;
 mod image_util;
 mod math;
-mod models;
+pub mod models;
 mod poisson;
 mod spatial_hash;
+mod svg;
 
 pub use image_pack::{
     pack_as_vec, pack_into_vec, unpack_r_image_from_vec_1d, unpack_r_image_from_vec_2d,
@@ -15,6 +16,7 @@ pub use image_pack::{
     unpack_rgba_image_from_vec_3d,
 };
 
+pub use crate::svg::polyline_to_node;
 pub use image_util::read_rgba_image_to_array;
 pub use math::refract_dir;
 pub use models::add_box;

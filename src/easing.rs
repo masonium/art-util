@@ -7,13 +7,16 @@ pub trait Easeable<F: Float> {
     fn lerp(x: F, a: Self, b: Self) -> Self::Output;
 }
 
-impl<F: Float, T> Easeable<F> for T where T: std::ops::Mul<F>, <T as std::ops::Mul<F>>::Output: std::ops::Add {
+impl<F: Float, T> Easeable<F> for T
+where
+    T: std::ops::Mul<F>,
+    <T as std::ops::Mul<F>>::Output: std::ops::Add,
+{
     type Output = <<T as std::ops::Mul<F>>::Output as std::ops::Add>::Output;
     fn lerp(x: F, a: Self, b: Self) -> Self::Output {
-	a * (F::one() - x) + b * x
+        a * (F::one() - x) + b * x
     }
 }
-
 
 /// Perform a linear interpolation from `a` to `b` by `x`, where x is
 /// typically in the range [0.0, 1.0].
@@ -33,17 +36,13 @@ impl<F: Float, T> Easeable<F> for T where T: std::ops::Mul<F>, <T as std::ops::M
 /// assert_approx_eq!(c.x, 0.75);
 /// assert_approx_eq!(c.y, 2.25);
 /// ```
-pub fn lerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> 
-    <T as Easeable<F>>::Output
-{
+pub fn lerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> <T as Easeable<F>>::Output {
     <T as Easeable<F>>::lerp(x, a, b)
 }
 
 /// Clamped linear interpolation, where the `x` values is clamped to
 /// [0.0, 1.0]. Equivalent to `lerp(clamp(x, 0.0, 1.0), a, b)`
-pub fn clerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> 
-    <T as Easeable<F>>::Output
-{
+pub fn clerp<F: Float, T: Easeable<F>>(x: F, a: T, b: T) -> <T as Easeable<F>>::Output {
     let t = num::clamp(x, F::zero(), F::one());
     <T as Easeable<F>>::lerp(t, a, b)
 }
@@ -103,17 +102,17 @@ where
 
     /// Equivalent to `ease_in(t, 0.0, 1.0)`.
     fn ease_in_u(t: F) -> F {
-	Self::ease_in(t, F::zero(), F::one())
+        Self::ease_in(t, F::zero(), F::one())
     }
 
     /// Equivalent to `ease_out(t, 0.0, 1.0)`.
     fn ease_out_u(t: F) -> F {
-	Self::ease_out(t, F::zero(), F::one())
+        Self::ease_out(t, F::zero(), F::one())
     }
 
     /// Equivalent to `ease_in_out(t, 0.0, 1.0)`.
     fn ease_in_out_u(t: F) -> F {
-	Self::ease_in_out(t, F::zero(), F::one())
+        Self::ease_in_out(t, F::zero(), F::one())
     }
 }
 
@@ -139,9 +138,7 @@ impl_easing!(Sine, |t| {
     let half_pi = std::f64::consts::FRAC_PI_2.as_();
     F::one() - (t * half_pi).cos()
 });
-impl_easing!(Circle, |t| {
-    F::one() - (F::one() - t * t).sqrt()
-});
+impl_easing!(Circle, |t| { F::one() - (F::one() - t * t).sqrt() });
 
 #[cfg(test)]
 mod test {
@@ -150,12 +147,12 @@ mod test {
 
     #[test]
     fn test_lerp() {
-	assert_eq!(lerp(0.7, 0.123, 0.489), 0.3792);
+        assert_eq!(lerp(0.7, 0.123, 0.489), 0.3792);
     }
 
     #[test]
     fn test_inv_lerp() {
-	assert_eq!(inv_lerp(0.3792, 0.123, 0.489), 0.7);
+        assert_eq!(inv_lerp(0.3792, 0.123, 0.489), 0.7);
     }
 
     #[test]

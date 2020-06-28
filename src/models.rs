@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use num::Integer;
+use num::{Float, Integer};
 use std::convert::TryInto;
 
 // extend an existing vertex and index list by a box
@@ -36,4 +36,20 @@ pub fn add_box<
             .iter()
             .map(|i| (*i + idx_offset).try_into().unwrap()),
     );
+}
+
+/// Return `n` equally spaced values from start to end.
+pub fn linspace<F: Float + 'static>(start: F, end: F, n: usize) -> impl Iterator<Item = F> {
+    let df = (end - start) / F::from(n - 1).unwrap();
+    (0..n).map(move |i| start + df.clone() * F::from(i).unwrap())
+}
+
+/// Append to the index list a set of indices for renderings lines,
+/// starting at index `start` and rendering `n` points as consecutive lines.
+/// (start, start+1, start+1, start+2, ..., start+n-2, start+n-1.
+///
+/// If `with_loop` is true, also append the indices from
+pub fn add_linear_index(start: u32, n: u32, with_loop: bool) -> impl Iterator<Item = u32> {
+    let last = 2 * if with_loop { n } else { n - 1 };
+    (0..last).map(move |i| start + (i + 1) / 2)
 }
