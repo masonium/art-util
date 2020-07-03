@@ -38,12 +38,6 @@ pub fn add_box<
     );
 }
 
-/// Return `n` equally spaced values from start to end.
-pub fn linspace<F: Float + 'static>(start: F, end: F, n: usize) -> impl Iterator<Item = F> {
-    let df = (end - start) / F::from(n - 1).unwrap();
-    (0..n).map(move |i| start + df.clone() * F::from(i).unwrap())
-}
-
 /// Append to the index list a set of indices for renderings lines,
 /// starting at index `start` and rendering `n` points as consecutive lines.
 /// (start, start+1, start+1, start+2, ..., start+n-2, start+n-1.
