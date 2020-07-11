@@ -1,5 +1,33 @@
 use nalgebra as na;
 
+pub trait ToArray<T: Copy> {
+    type Output;
+    fn to_array(self) -> Self::Output;
+}
+
+
+impl<T: Copy> ToArray<T> for (T, T) {
+    type Output = [T; 2];
+    fn to_array(self) -> [T; 2] {
+	[self.0, self.1]
+    }
+}
+
+impl<T: Copy> ToArray<T> for (T, T, T) {
+    type Output = [T; 3];
+    fn to_array(self) -> [T; 3] {
+	[self.0, self.1, self.2]
+    }
+}
+
+impl<T: Copy> ToArray<T> for (T, T, T, T) {
+    type Output = [T; 4];
+    fn to_array(self) -> [T; 4] {
+	[self.0, self.1, self.2, self.3]
+    }
+}
+
+
 pub fn refract_dir(
     incident: na::Vector2<f32>,
     normal: na::Vector2<f32>,

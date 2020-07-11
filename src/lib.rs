@@ -19,10 +19,10 @@ pub use image_pack::{
 
 pub use crate::svg::polyline_to_node;
 pub use image_util::read_rgba_image_to_array;
-pub use math::refract_dir;
+pub use math::{refract_dir, ToArray};
 pub use models::add_box;
 pub use poisson::PoissonSampling;
 pub use spatial_hash::SpatialHash2D;
 
 pub use fn_gen::gen_dated_filenames;
-pub use color::parse_hex_srgb;
+pub use color::{parse_hex_srgb, parse_hex_srgba};
