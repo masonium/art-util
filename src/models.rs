@@ -1,5 +1,5 @@
 use nalgebra::Vector3;
-use num::{Float, Integer};
+use num::{Integer};
 use std::convert::TryInto;
 
 // extend an existing vertex and index list by a box
