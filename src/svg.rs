@@ -15,13 +15,13 @@ pub fn polyline_to_node<F: na::Scalar + Display>(
     let mut curr = 0;
     while curr < points.len() {
         let num_points = std::cmp::min(points_per_pl, points.len() - curr);
-	if num_points <= 1 {
-	    break;
-	}
+        if num_points <= 1 {
+            break;
+        }
         // format the points into a polyline
         let pl = Polyline::new().set(
             "points",
-            points[curr..curr+num_points]
+            points[curr..curr + num_points]
                 .iter()
                 .map(|p| format!("{},{}", p[0], p[1]))
                 .join(" "),

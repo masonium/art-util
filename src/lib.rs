@@ -1,3 +1,4 @@
+mod color;
 pub mod easing;
 mod fn_gen;
 mod image_pack;
@@ -7,7 +8,6 @@ pub mod models;
 mod poisson;
 mod spatial_hash;
 mod svg;
-mod color;
 
 pub use image_pack::{
     pack_as_vec, pack_into_vec, unpack_r_image_from_vec_1d, unpack_r_image_from_vec_2d,
@@ -24,5 +24,5 @@ pub use models::add_box;
 pub use poisson::PoissonSampling;
 pub use spatial_hash::SpatialHash2D;
 
-pub use fn_gen::gen_dated_filenames;
 pub use color::{parse_hex_srgb, parse_hex_srgba};
+pub use fn_gen::gen_dated_filenames;
