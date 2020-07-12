@@ -138,7 +138,7 @@ impl_easing!(Sine, |t| {
     let half_pi = std::f64::consts::FRAC_PI_2.as_();
     F::one() - (t * half_pi).cos()
 });
-impl_easing!(Circle, |t| { F::one() - (F::one() - t * t).sqrt() });
+impl_easing!(Circle, |t| F::one() - (F::one() - t * t).sqrt());
 
 #[cfg(test)]
 mod test {
