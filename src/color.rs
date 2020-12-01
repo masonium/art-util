@@ -4,7 +4,7 @@ use palette::{Srgb, Srgba};
 /// Parse a 3- or 6-digit hexadecimal color into Srgb
 pub fn parse_hex_srgb(hex: &str) -> Option<Srgb> {
     // remove the preceding #
-    let hex = hex.trim_start_matches("#");
+    let hex = hex.trim_start_matches('#');
 
     if hex.len() == 6 {
         let r = i32::from_str_radix(&hex[0..2], 16).ok()? as f32 / 255.0;
@@ -23,7 +23,7 @@ pub fn parse_hex_srgb(hex: &str) -> Option<Srgb> {
 
 pub fn parse_hex_srgba(hex: &str) -> Option<Srgba> {
     // remove the preceding #
-    let hex = hex.trim_start_matches("#");
+    let hex = hex.trim_start_matches('#');
 
     if hex.len() == 8 {
         let r = i32::from_str_radix(&hex[0..2], 16).ok()? as f32 / 255.0;

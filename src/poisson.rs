@@ -71,7 +71,7 @@ impl PoissonSampling {
     }
 
     pub fn samples<R: Rng>(&mut self, r: &mut R) -> &Vec<na::Point2<f32>> {
-        while let Some(_) = self.next_sample(r) {}
+        while self.next_sample(r).is_some() {}
         &self.points
     }
 

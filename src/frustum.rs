@@ -1,6 +1,8 @@
 use nalgebra as na;
+//use ncollide2d as nc;
 
-pub enum FrustumPlanes {
+#[derive(Clone, Copy)]
+pub enum FrustumPlane {
     Left = 0,
     Right = 1,
     Bottom = 2,
@@ -39,10 +41,14 @@ impl Frustum {
     }
 
     /// Return true iff the point lines within the frustum.
-    pub fn is_point_in(&self, v: na::Vector3<f32>) -> bool {
+    pub fn is_point_in(&self, v: &na::Vector3<f32>) -> bool {
 	let ext = na::Vector4::new(v[0], v[1], v[2], 1.0);
 	self.planes.iter().all(|p| {
 	    p.dot(&ext) >= 0.0
 	})
+    }
+
+    pub fn get_plane(&self, idx: FrustumPlane) -> na::Vector4<f32> {
+	self.planes[idx as usize]
     }
 }

@@ -1,5 +1,5 @@
 use nalgebra as na;
-use crate::math::{Scalar, Rect};
+use crate::math::{Rect};
 use na::{Point2};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
