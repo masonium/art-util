@@ -8,8 +8,10 @@ edition = "2018"
 
 [dependencies]
 nalgebra = "*"
+nalgebra-glm = "*"
 ndarray = "*"
 rand = "*"
+rand_distr = "*"
 image = "*"
 num = "*"
 num-integer = "*"
@@ -19,7 +21,9 @@ assert_approx_eq = "*"
 svg = "*"
 itertools = "*"
 palette = "*"
+ncollide2d = "*"
 
 [dev-dependencies]
 nalgebra-glm = "*"
 assert_approx_eq = "*"
+decorum = "*"
