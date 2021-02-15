@@ -1,3 +1,4 @@
+mod common;
 mod color;
 pub mod easing;
 mod fn_gen;
@@ -10,6 +11,7 @@ mod spatial_hash;
 pub mod svg;
 mod frustum;
 mod random;
+mod dual_contour;
 
 pub mod midi;
 
@@ -34,3 +36,4 @@ pub use color::{parse_hex_srgb, parse_hex_srgba};
 pub use fn_gen::gen_dated_filenames;
 pub use frustum::Frustum;
 pub use random::{random_unit_vector, random_quat};
+pub use dual_contour::{CellClass, QuadTree};

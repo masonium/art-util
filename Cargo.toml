@@ -7,11 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nalgebra = "*"
-nalgebra-glm = "*"
+nalgebra = "0.23"
+nalgebra-glm = "0.9"
 ndarray = "*"
-rand = "*"
-rand_distr = "*"
+rand = "0.7"
+rand_distr = "0.3"
 image = "*"
 num = "*"
 num-integer = "*"
@@ -22,8 +22,9 @@ svg = "*"
 itertools = "*"
 palette = "*"
 ncollide2d = "*"
+slotmap = "*"
 
 [dev-dependencies]
-nalgebra-glm = "*"
+nalgebra-glm = "0.9"
 assert_approx_eq = "*"
 decorum = "*"
