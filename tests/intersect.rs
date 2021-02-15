@@ -9,7 +9,8 @@ mod test {
 	let is = line_intersect_2d(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0),
 				   Point2::new(1.0, 0.0), Point2::new(0.0, 1.0));
 
-	assert_approx_eq!(is.t1().unwrap(), 0.5);
+	let t1: f64 = is.t1().unwrap();
+	assert_approx_eq!(t1, 0.5);
 	assert_approx_eq!(is.t2().unwrap(), 0.5);
     }
 
@@ -19,7 +20,8 @@ mod test {
 					   Point2::new(-0.5, 1.0), Point2::new(0.5, 1.0));
 
 	dbg!(is);
-	assert_approx_eq!(is.t1().unwrap(), 1.0);
+	let t1: f64 = is.t1().unwrap();
+	assert_approx_eq!(t1, 1.0);
 	assert_approx_eq!(is.t2().unwrap(), 0.5);
     }
 }
