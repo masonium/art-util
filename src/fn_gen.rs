@@ -2,6 +2,10 @@
 use std::fs::DirBuilder;
 use std::path::{Path, PathBuf};
 
+/// Generate a set of filenames, based on given extensions, in a dated
+/// directory. The filenames with start with the provided `tag` and
+/// will all have a matching basename, containing the current time and
+/// an incrementing unique id.
 pub fn gen_dated_filenames(tag: &str, extensions: &[&str]) -> std::io::Result<Vec<PathBuf>> {
     let curr_time = chrono::offset::Local::now();
 
