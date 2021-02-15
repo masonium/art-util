@@ -25,7 +25,7 @@ pub use crate::svg::{polyline_to_node, polygon_to_node};
 pub use image_util::read_rgba_image_to_array;
 pub use math::{refract_dir, ToArray};
 pub use math::{line_intersect_2d, implicit_ray_intersect_2d, orient_2d, PointTest};
-pub use math::{clip_line, Rect, ClipResult};
+pub use math::{clip_line, clip_polyline, Rect, ClipResult};
 pub use models::add_box;
 pub use poisson::PoissonSampling;
 pub use spatial_hash::SpatialHash2D;

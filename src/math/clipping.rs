@@ -1,5 +1,5 @@
 use nalgebra as na;
-use crate::math::{Rect};
+use crate::math::{Rect, Scalar};
 use na::{Point2};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -23,11 +23,59 @@ impl<F: na::RealField> ClipResult<F> {
     }
 }
 
+/// Clip a polyline with a rect.
+///
+/// The input is a polyline (p0, p1, ..., p_n) and the output is a
+/// collection of polylines.
+pub fn clip_polyline<F: Scalar>(p: &[Point2<F>],
+				r: &Rect<F>)
+				-> Vec<Vec<Point2<F>>> {
+
+    let mut polylines = vec![];
+    let mut curr: Vec<Point2<F>> = vec![];
+    for i in 1..p.len() {
+	match clip_line(&p[i-1], &p[i], r) {
+	    // clear the current line, nothing else to do.
+	    ClipResult::OutsideVertical | ClipResult::OutsideHorizontal | ClipResult::Outside => {
+		if !curr.is_empty() {
+		    polylines.push(std::mem::take(&mut curr));
+		    curr.clear();
+		}
+		continue;
+	    },
+
+	    // start or add to the existing polyline
+	    ClipResult::Inside(a, b) => {
+		if curr.is_empty() {
+		    curr.push(a);
+		}
+		curr.push(b);
+	    },
+
+	    ClipResult::Partial(a, b) => {
+		// if current is empty, just add a singleton polyline
+		if curr.is_empty() {
+		    polylines.push(vec![a, b]);
+		} else {
+		    // the last was inside, so this must end the polyline
+		    curr.push(b);
+		    polylines.push(std::mem::take(&mut curr));
+		    curr.clear();
+		}
+	    }
+	}
+    }
+
+    if !curr.is_empty() {
+	polylines.push(curr);
+    }
+    polylines
+}
 
 /// Clip a line using a rect.
 ///
 /// Use Liang-Barksy.
-pub fn clip_line<F: na::RealField>(a0: &Point2<F>, a1: &Point2<F>,
+pub fn clip_line<F: Scalar>(a0: &Point2<F>, a1: &Point2<F>,
 				   r: &Rect<F>) -> ClipResult<F> {
     let zero = F::zero();
     let one = F::one();
@@ -93,7 +141,7 @@ pub fn clip_line<F: na::RealField>(a0: &Point2<F>, a1: &Point2<F>,
 	return ClipResult::Inside(*a0, *a1);
     }
 
-    ClipResult::Partial(a0 + lp2 * neg, a1 + lp2 * pos)
+    ClipResult::Partial(a0 + lp2 * neg, a0 + lp2 * pos)
 }
 
 #[cfg(test)]
