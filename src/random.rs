@@ -1,8 +1,7 @@
 //! Various random generation utilities.
-use nalgebra_glm as glm;
 use nalgebra as na;
 use na::{Unit, UnitQuaternion};
-use glm::{vec3, Vec3};
+use nalgebra_glm::{vec3, Vec3};
 use rand_distr::{Distribution, StandardNormal};
 use rand::Rng;
 
