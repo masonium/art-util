@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod test {
-    use assert_approx_eq::assert_approx_eq;
     use na::Point2;
     use nalgebra as na;
     use art_util::Rect;
@@ -23,27 +22,12 @@ mod test {
     fn creation_f32() {
 	let qt = create_qt_f32();
 	assert!(qt.is_valid());
-	assert_eq!(qt.count_leaves(), 1024);
-    }
-
-    #[test]
-    fn collapse_f32() {
-	let mut qt = create_qt_f32();
-	qt.collapse();
-	assert!(qt.is_valid());
 	assert_eq!(qt.count_leaves(), 244);
     }
 
     #[test]
     fn creation_f64() {
 	let qt = create_qt_f64();
-	assert!(qt.is_valid());
-	assert_eq!(qt.count_leaves(), 1024);
-    }
-    #[test]
-    fn collapse_f64() {
-	let mut qt = create_qt_f64();
-	qt.collapse();
 	assert!(qt.is_valid());
 	assert_eq!(qt.count_leaves(), 244);
     }

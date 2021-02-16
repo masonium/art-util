@@ -132,39 +132,42 @@ impl<F: Scalar> QtNode<F> {
 	    keys.push(node_map.insert(node));
 	}
 
-	QtNode::Interior(QtInterior { children: keys.try_into().unwrap(), geom: *bb })
+	QtNode::Interior(QtInterior { children: keys.try_into().unwrap(), geom: *bb }).collapse(node_map)
     }
 
-    /// Return a collapsed version of this node, recursive collapsing
-    /// internal nodes. Homogenous interior nodes are collapsed into
-    /// leaf nodes.
+    /// Return a collapsed version of this node.
+    ///
+    /// Only intended to be called within builder.
+    ///
+    /// Homogenous interior nodes are collapsed into leaf nodes.
     fn collapse(self, nm: &mut QtNodeMap<F>) -> QtNode<F> {
 	match self {
 	    leaf @ QtNode::Leaf(_) => leaf,
-	    QtNode::Interior(inte) => {
-		let nodes: Vec<_> = inte.children.iter()
-		    .filter_map(|key| nm.remove(*key))
-		    .collect();
+	    QtNode::Interior(ref inte) => {
+		// let nodes: Vec<_> = inte.children.iter()
+		//     .filter_map(|key| nm.remove(*key))
+		//     .collect();
 
-		let collapsed_nodes: Vec<_> = nodes.into_iter().map(|n| n.collapse(nm)).collect();
+		let is_collapsible = inte.nodes(nm)
+		    .all(|n| n.is_leaf() && n.is_homogenous(nm));
+		//let collapsed_nodes: Vec<_> = nodes.into_iter().map(|n| n.collapse(nm)).collect();
 
-		if collapsed_nodes.iter().all(|n| n.is_leaf() && n.is_homogenous(nm)) {
+		if is_collapsible {
 		    // construct a new leaf node
-		    let nodes = collapsed_nodes;
+		    let nodes: Vec<_> = inte.children.iter()
+			.filter_map(|key| nm.remove(*key))
+			.collect();
 		    let leaves: Vec<QtLeaf<F>> = nodes.into_iter().filter_map(|x| x.into_leaf()).collect();
 		    let vals: Vec<_> = leaves.iter().enumerate().map(|(i, leaf)| leaf.vertex_eval[i]).collect();
 		    QtNode::Leaf(QtLeaf { geom: inte.geom, vertex_eval: vals.try_into().unwrap(), intersections: Vec::new() })
 		} else {
-		    // create a new interior node from the collapsed nodes
-		    let collapsed_keys: Vec<_> = collapsed_nodes.into_iter().map(|n| nm.insert(n)).collect();
-		    QtNode::Interior( QtInterior { geom: inte.geom,
-						   children: collapsed_keys.try_into().unwrap()
-		    })
+		    self
 		}
 	    }
 	}
     }
 
+    /// Return the set of all rects representing leaves.
     fn leaf_rects(&self, nm: &QtNodeMap<F>, r: &mut Vec<(Rect<F>, CellClass)>) {
 	match self {
 	    QtNode::Interior(inte) => {
@@ -240,13 +243,6 @@ impl<F: Scalar> QuadTree<F> {
 	let root_key = node_map.insert(root_node);
 
 	QuadTree { node_data: node_map, root_node: root_key }
-    }
-
-    /// Collapse the quad-tree to minimize homogenous leaves.
-    pub fn collapse(&mut self) {
-	let root = self.node_data.remove(self.root_node).unwrap();
-	let new_root = root.collapse(&mut self.node_data);
-	self.root_node = self.node_data.insert(new_root);
     }
 
     pub fn count_leaves(&self) -> usize {
