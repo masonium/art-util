@@ -1,6 +1,7 @@
 //! 2D dual contour implementation
 use crate::common::*;
 use crate::math::{find_root, types::{Rect, Scalar}};
+use ndarray::Array2;
 use slotmap::{new_key_type, DenseSlotMap};
 use std::convert::TryInto;
 use itertools::Itertools;
@@ -37,6 +38,20 @@ impl<T, F: Scalar> SDF<F> for T where T: Fn(Point2<F>) -> F {
     }
 }
 
+#[derive(Clone, Debug)]
+struct QEF<F: Scalar> {
+    // A | b
+    ab_q: Array2<F>,
+
+    ab_r: Array2<F>,
+
+    // mass point, to minimize distance to
+    mass_point_p: Vector2<F>,
+
+    // mass point dimension, for merging
+    mass_point_dim: usize
+}
+
 /// Quadtree order:
 /// -------2--------
 /// |     +y       |
@@ -62,12 +77,15 @@ struct QtLeaf<F: Scalar> {
     vertex_eval: [F; 4],
 
     /// Intersection values
-    intersections: Vec<Hermite<F>>
+    intersections: Vec<Hermite<F>>,
+
+    // Quadratic error function, used to solve for dual cell point.
+    //qef: QEF<F>
 }
 
 impl<F: Scalar> QtLeaf<F> {
     /// Return a leaf from the component parts.
-    /// Computes the set of all intersections
+    /// Compute all of the intersections of edge points.
     fn from_parts<T>(f: &T, rect: &Rect<F>, vertex_eval: &[F; 4]) -> QtLeaf<F>
     where T: SDF<F> {
 	// Find the intersections on each edge, if they exist.
@@ -95,7 +113,7 @@ impl<F: Scalar> QtLeaf<F> {
 
 	    if let Some(r) = root {
 		let p = c0 + (c1 - c0) * r;
-		let (v, dv) = f.eval_f_df(p, eps);
+		let (_, dv) = f.eval_f_df(p, eps);
 		intersections.push( Hermite { p, n: dv.normalize() });
 	    }
 	}
