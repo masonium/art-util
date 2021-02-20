@@ -1,6 +1,6 @@
 //! 2D dual contour implementation
 use crate::common::*;
-use crate::math::types::{Rect, Scalar};
+use crate::math::{find_root, types::{Rect, Scalar}};
 use slotmap::{new_key_type, DenseSlotMap};
 use std::convert::TryInto;
 use itertools::Itertools;
@@ -19,6 +19,23 @@ pub enum CellClass {
     Mixed
 }
 
+pub trait SDF<F: Scalar> {
+    fn eval_f(&self, p: Point2<F>) -> F;
+
+    fn eval_f_df(&self, p: Point2<F>, eps: F) ->(F, Vector2<F>) {
+	let f = self.eval_f(p);
+	let dfx = self.eval_f(p + Vector2::new(eps, F::zero()));
+	let dfy = self.eval_f(p + Vector2::new(F::zero(), eps));
+	(f, Vector2::new((dfx - f) / eps, (dfy - f) / eps))
+    }
+}
+
+/// Simple functions can be used as is, with an implicit derivative.
+impl<T, F: Scalar> SDF<F> for T where T: Fn(Point2<F>) -> F {
+    fn eval_f(&self, p: Point2<F>) -> F {
+	self(p)
+    }
+}
 
 /// Quadtree order:
 /// -------2--------
@@ -49,11 +66,48 @@ struct QtLeaf<F: Scalar> {
 }
 
 impl<F: Scalar> QtLeaf<F> {
+    /// Return a leaf from the component parts.
+    /// Computes the set of all intersections
+    fn from_parts<T>(f: &T, rect: &Rect<F>, vertex_eval: &[F; 4]) -> QtLeaf<F>
+    where T: SDF<F> {
+	// Find the intersections on each edge, if they exist.
+	let c = rect.corners();
+	let mut intersections = Vec::new();
+
+	for i in 0..4 {
+	    let f0 = vertex_eval[i];
+	    let f1 = vertex_eval[(i+1)%4];
+
+	    let c0 = c[i];
+	    let c1 = c[(i+1)%4];
+	    // If they have the same sign, we can just move on to the
+	    // next edge.
+	    if f0.signum() == f1.signum() {
+		continue;
+	    }
+	    let delta = F::from_subset(&1e-4);
+	    let eps = F::from_subset(&1e-4);
+	    // Binary search until we get a value that's close to zero.
+	    let root = find_root(&|t: F| {
+		let p = c0 + (c1 - c0) * t;
+		f.eval_f(p)
+	    }, &(F::zero(), F::one()), delta, eps);
+
+	    if let Some(r) = root {
+		let p = c0 + (c1 - c0) * r;
+		let (v, dv) = f.eval_f_df(p, eps);
+		intersections.push( Hermite { p, n: dv.normalize() });
+	    }
+	}
+	QtLeaf { geom: *rect, vertex_eval: *vertex_eval, intersections }
+    }
+
     /// Return true iff this leaf represents a homogenous-sign region.
     fn is_homogenous(&self) -> bool {
 	self.vertex_eval.iter().map(|x| x.signum()).all_equal()
     }
 
+    /// Return the type of cell this leaf represents.
     fn cell_class(&self) -> CellClass {
 	if self.vertex_eval.iter().map(|x| x.signum()).all_equal() {
 	    if self.vertex_eval[0] > F::zero() {
@@ -98,12 +152,13 @@ impl<F: Scalar> QtNode<F> {
     /// Create a node using the provided function.
     fn build_from_fn<T>(f: &T, bb: &Rect<F>, max_depth: usize,
 		     corner_vals: &[F; 4], node_map: &mut QtNodeMap<F>) -> QtNode<F>
-    where T: Fn(Point2<F>) -> F {
+    where T: SDF<F> {
 	// leaf-node-map
 	if max_depth == 0 {
-	    // create a leaf node, with predetermined
+	    // create a leaf node, with pre-calculated corner values.
 	    let leaf = QtLeaf { geom: *bb, vertex_eval: *corner_vals,
 				intersections: Vec::new() };
+
 	    return QtNode::Leaf(leaf);
 	}
 
@@ -111,8 +166,8 @@ impl<F: Scalar> QtNode<F> {
 	let mp = bb.midpoints();
 	let c = bb.center();
 
-	let mid = [f(mp[0]), f(mp[1]), f(mp[2]), f(mp[3])];
-	let c_eval = f(c);
+	let mid = [f.eval_f(mp[0]), f.eval_f(mp[1]), f.eval_f(mp[2]), f.eval_f(mp[3])];
+	let c_eval = f.eval_f(c);
 
 	let cv = &corner_vals;
 	let evals = [[cv[0], mid[0], c_eval, mid[3]],
@@ -144,13 +199,8 @@ impl<F: Scalar> QtNode<F> {
 	match self {
 	    leaf @ QtNode::Leaf(_) => leaf,
 	    QtNode::Interior(ref inte) => {
-		// let nodes: Vec<_> = inte.children.iter()
-		//     .filter_map(|key| nm.remove(*key))
-		//     .collect();
-
 		let is_collapsible = inte.nodes(nm)
 		    .all(|n| n.is_leaf() && n.is_homogenous(nm));
-		//let collapsed_nodes: Vec<_> = nodes.into_iter().map(|n| n.collapse(nm)).collect();
 
 		if is_collapsible {
 		    // construct a new leaf node
@@ -234,10 +284,11 @@ impl<F: Scalar> QuadTree<F> {
     /// rectangle. A maximum number of level is specified for the
     /// depth of the quadtree.
     pub fn build_from_fn<T>(f: &T, bb: &Rect<F>, max_depth: usize) -> QuadTree<F>
-    where T: Fn(Point2<F>) -> F{
+    where T: SDF<F> {
 	// Evaluate at the corners to seed the calculation.
 	let corners = bb.corners();
-	let corner_evals: [F; 4] = [f(corners[0]), f(corners[1]), f(corners[2]), f(corners[3])];
+	let corner_evals: [F; 4] = [f.eval_f(corners[0]), f.eval_f(corners[1]),
+				    f.eval_f(corners[2]), f.eval_f(corners[3])];
 	let mut node_map = DenseSlotMap::with_key();
 	let root_node = QtNode::build_from_fn(f, bb, max_depth, &corner_evals, &mut node_map);
 	let root_key = node_map.insert(root_node);
