@@ -3,13 +3,14 @@ name = "art-util"
 version = "0.1.0"
 authors = ["Mason Smith <masonium@gmail.com>"]
 edition = "2018"
+links="lapacke"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 nalgebra = "0.23"
 nalgebra-glm = "0.9"
-ndarray = "*"
+ndarray = "0.13"
+ndarray-linalg = "0.12"
 rand = "0.7"
 rand_distr = "0.3"
 image = "*"
@@ -21,8 +22,10 @@ assert_approx_eq = "*"
 svg = "*"
 itertools = "*"
 palette = "*"
-ncollide2d = "*"
 slotmap = "*"
+
+[build-dependencies]
+pkg-config = "*"
 
 [dev-dependencies]
 nalgebra-glm = "0.9"
