@@ -20,7 +20,7 @@ pub fn find_root<F: Scalar, T: Fn(F) -> F>(f: &T, domain: &(F, F), delta: F, eps
     }
 
     let delta = delta.abs();
-    let epilon = epsilon.abs();
+    let epsilon = epsilon.abs();
 
     while r - l >= delta {
 	// Use the secant line and guess that as the next root.

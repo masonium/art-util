@@ -1,9 +1,10 @@
 use nalgebra as na;
 use na::{Point2, Vector2, center};
+use ndarray_linalg::{Lapack, Scalar as NDScalar};
 use std::fmt::Debug;
 
-pub trait Scalar: na::RealField + Into<f64> /*+ TryFrom<f64>*/ + Debug + Copy + 'static{}
-impl<T> Scalar for T where T: na::RealField + Into<f64> /*+ TryFrom<f64>*/ + Debug + Copy + 'static {}
+pub trait Scalar: na::RealField + Into<f64> + NDScalar + Lapack + Debug + Copy + 'static{}
+impl<T> Scalar for T where T: na::RealField + Into<f64> + NDScalar + Lapack + Debug + Copy + 'static {}
 
 /// Simple 2D rectangle, for common bounding-box style operations.
 #[derive(Clone, Copy, Debug)]
