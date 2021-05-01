@@ -1,17 +1,11 @@
 //! 2D dual contour implementation
 use crate::common::*;
 use crate::math::{find_root, types::{Rect, Scalar}};
-use ndarray::Array2;
 use slotmap::{new_key_type, DenseSlotMap};
 use std::convert::TryInto;
 use itertools::Itertools;
-
-#[derive(Clone, Copy, Debug)]
-struct Hermite<F: Scalar> {
-    p: Point2<F>,
-    n: Vector2<F>
-}
-
+use super::types::HermiteData;
+use super::qef::QEF;
 
 #[derive(Clone, Copy, Debug, Hash)]
 pub enum CellClass {
@@ -36,20 +30,6 @@ impl<T, F: Scalar> SDF<F> for T where T: Fn(Point2<F>) -> F {
     fn eval_f(&self, p: Point2<F>) -> F {
 	self(p)
     }
-}
-
-#[derive(Clone, Debug)]
-struct QEF<F: Scalar> {
-    // A | b
-    ab_q: Array2<F>,
-
-    ab_r: Array2<F>,
-
-    // mass point, to minimize distance to
-    mass_point_p: Vector2<F>,
-
-    // mass point dimension, for merging
-    mass_point_dim: usize
 }
 
 /// Quadtree order:
@@ -77,10 +57,10 @@ struct QtLeaf<F: Scalar> {
     vertex_eval: [F; 4],
 
     /// Intersection values
-    intersections: Vec<Hermite<F>>,
+    intersections: Vec<HermiteData<F>>,
 
-    // Quadratic error function, used to solve for dual cell point.
-    //qef: QEF<F>
+    /// Quadratic error function, used to solve for dual cell point.
+    qef: Option<QEF<F>>
 }
 
 impl<F: Scalar> QtLeaf<F> {
@@ -88,6 +68,9 @@ impl<F: Scalar> QtLeaf<F> {
     /// Compute all of the intersections of edge points.
     fn from_parts<T>(f: &T, rect: &Rect<F>, vertex_eval: &[F; 4]) -> QtLeaf<F>
     where T: SDF<F> {
+	if vertex_eval.iter().map(|x| x.signum()).all_equal() {
+	    return Self::new_homogenous(rect, vertex_eval);
+	}
 	// Find the intersections on each edge, if they exist.
 	let c = rect.corners();
 	let mut intersections = Vec::new();
@@ -114,10 +97,24 @@ impl<F: Scalar> QtLeaf<F> {
 	    if let Some(r) = root {
 		let p = c0 + (c1 - c0) * r;
 		let (_, dv) = f.eval_f_df(p, eps);
-		intersections.push( Hermite { p, n: dv.normalize() });
+		intersections.push( HermiteData { p, n: dv.normalize() });
 	    }
 	}
-	QtLeaf { geom: *rect, vertex_eval: *vertex_eval, intersections }
+
+	assert!(intersections.len() % 2 == 0);
+
+	QtLeaf { geom: *rect, vertex_eval: *vertex_eval,
+		 qef: Some(QEF::new(&intersections)),
+		 intersections,
+	}
+    }
+    fn new_homogenous(rect: &Rect<F>, vertex_eval: &[F; 4]) -> QtLeaf<F>  {
+	assert!(vertex_eval.iter().map(|x| x.signum()).all_equal());
+
+	QtLeaf { geom: *rect, vertex_eval: *vertex_eval,
+		 qef: None,
+		 intersections: Vec::new(),
+	}
     }
 
     /// Return true iff this leaf represents a homogenous-sign region.
@@ -174,8 +171,7 @@ impl<F: Scalar> QtNode<F> {
 	// leaf-node-map
 	if max_depth == 0 {
 	    // create a leaf node, with pre-calculated corner values.
-	    let leaf = QtLeaf { geom: *bb, vertex_eval: *corner_vals,
-				intersections: Vec::new() };
+	    let leaf = QtLeaf::from_parts(f, bb, corner_vals);
 
 	    return QtNode::Leaf(leaf);
 	}
@@ -227,7 +223,7 @@ impl<F: Scalar> QtNode<F> {
 			.collect();
 		    let leaves: Vec<QtLeaf<F>> = nodes.into_iter().filter_map(|x| x.into_leaf()).collect();
 		    let vals: Vec<_> = leaves.iter().enumerate().map(|(i, leaf)| leaf.vertex_eval[i]).collect();
-		    QtNode::Leaf(QtLeaf { geom: inte.geom, vertex_eval: vals.try_into().unwrap(), intersections: Vec::new() })
+		    QtNode::Leaf(QtLeaf::new_homogenous(&inte.geom, &vals.try_into().unwrap()))
 		} else {
 		    self
 		}
