@@ -11,15 +11,19 @@ mod spatial_hash;
 pub mod svg;
 mod frustum;
 mod random;
-mod dual_contour;
+//mod dual_contour;
 
 pub mod midi;
 
+#[cfg(feature = "image_pack")]
 pub use image_pack::{
     pack_as_vec, pack_into_vec, unpack_r_image_from_vec_1d, unpack_r_image_from_vec_2d,
-    unpack_r_image_from_vec_3d, unpack_rg_image_from_vec_1d, unpack_rg_image_from_vec_2d,
-    unpack_rg_image_from_vec_3d, unpack_rgb_image_from_vec_1d, unpack_rgb_image_from_vec_2d,
-    unpack_rgb_image_from_vec_3d, unpack_rgba_image_from_vec_1d, unpack_rgba_image_from_vec_2d,
+    unpack_r_image_from_vec_3d,
+unpack_rg_image_from_vec_1d, unpack_rg_image_from_vec_2d,
+    unpack_rg_image_from_vec_3d,
+ unpack_rgb_image_from_vec_1d, unpack_rgb_image_from_vec_2d,
+    unpack_rgb_image_from_vec_3d,
+ unpack_rgba_image_from_vec_1d, unpack_rgba_image_from_vec_2d,
     unpack_rgba_image_from_vec_3d,
 };
 
@@ -36,4 +40,5 @@ pub use color::{parse_hex_srgb, parse_hex_srgba};
 pub use fn_gen::gen_dated_filenames;
 pub use frustum::Frustum;
 pub use random::{random_unit_vector, random_quat};
-pub use dual_contour::{CellClass, QuadTree};
+pub use math::find_root;
+//pub use dual_contour::{CellClass, QuadTree};

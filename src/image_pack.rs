@@ -1,11 +1,12 @@
+#![cfg(feature = "image_pack")]
 //! Pack and unpack data between flat vectors of base components to
 //! 'ndarray's of fixed-size vectors.
-use nalgebra::{DimName, VectorN};
+use nalgebra::{SVector, DimName, U1, U2, U3, U4};
 use nd::prelude::*;
 use ndarray as nd;
 use ndarray::{IntoDimension, Ix};
 use std::fmt::Debug;
-use std::iter::{FromIterator, IntoIterator};
+use std::{convert::TryInto, iter::{FromIterator, IntoIterator}};
 
 pub enum PackImageError {
     Shape(nd::ShapeError),
@@ -63,44 +64,44 @@ impl ImageDim for (usize, usize, usize) {
     const DIM: usize = 3;
 }
 
-pub trait PixelDim: Sized {
-    const DIM: usize;
-    fn instance() -> Self;
-}
+// pub trait PixelDim: Sized {
+//     const DIM: usize;
+//     fn instance() -> Self;
+// }
 
-impl PixelDim for nalgebra::U1 {
-    const DIM: usize = 1;
-    fn instance() -> Self {
-        nalgebra::U1 {}
-    }
-}
-impl PixelDim for nalgebra::U2 {
-    const DIM: usize = 2;
-    fn instance() -> Self {
-        nalgebra::U2 {}
-    }
-}
-impl PixelDim for nalgebra::U3 {
-    const DIM: usize = 3;
-    fn instance() -> Self {
-        nalgebra::U3 {}
-    }
-}
-impl PixelDim for nalgebra::U4 {
-    const DIM: usize = 4;
-    fn instance() -> Self {
-        nalgebra::U4 {}
-    }
-}
+// impl PixelDim for nalgebra::U1 {
+//     const DIM: usize = 1;
+//     fn instance() -> Self {
+//         nalgebra::U1 {}
+//     }
+// }
+// impl PixelDim for nalgebra::U2 {
+//     const DIM: usize = 2;
+//     fn instance() -> Self {
+//         nalgebra::U2 {}
+//     }
+// }
+// impl PixelDim for nalgebra::U3 {
+//     const DIM: usize = 3;
+//     fn instance() -> Self {
+//         nalgebra::U3 {}
+//     }
+// }
+// impl PixelDim for nalgebra::U4 {
+//     const DIM: usize = 4;
+//     fn instance() -> Self {
+//         nalgebra::U4 {}
+//     }
+// }
 
 /// reshape and pack an image from a flat vector to an nd with vector elements.
 macro_rules! define_unpack_func {
     ($func_name:ident, $image_dim:ty,
-     $pdim_type:ty) => {
+     $pdim_type:ty ) => {
         pub fn $func_name<T: Debug + Copy + PartialEq + 'static>(
             data: Vec<T>,
             dim: $image_dim,
-        ) -> Result<nd::Array<VectorN<T, $pdim_type>, Dim<[Ix; <$image_dim>::DIM]>>, PackImageError>
+        ) -> Result<nd::Array<SVector<T, { <$pdim_type>::USIZE }>, Dim<[Ix; <$image_dim>::DIM]>>, PackImageError>
         where
             nalgebra::DefaultAllocator: nalgebra::base::allocator::Allocator<T, $pdim_type>,
         {
@@ -110,20 +111,24 @@ macro_rules! define_unpack_func {
             Array::from_iter(
                 data.into_iter()
                     .as_slice()
-                    .chunks(<$pdim_type>::DIM)
+                    .chunks( {<$pdim_type>::USIZE} )
                     .map(|a| {
-                        VectorN::from_row_slice_generic(
-                            <$pdim_type>::instance(),
-                            nalgebra::U1 {},
-                            a,
-                        )
+			let arr: [T; <$pdim_type>::USIZE] = a.try_into().unwrap();
+			arr.into()
+//			SVector::copy_from_slice(a)
+                        // SVector::from_row_slice_generic(
+                        //     <$pdim_type>::USIZE,
+                        //     nalgebra::U1 {},
+                        //     a,
+                        // )
                     }),
             )
-            .into_shape(into_dim.reverse())
-            .map_err(|x| x.into())
+		.into_shape(into_dim.reverse())
+		.map_err(|x| x.into())
         }
     };
 }
+
 
 /// Return a flat vector from an array representing the image,
 /// consuming the array. If the array is in standard layout, no
@@ -132,14 +137,15 @@ macro_rules! define_unpack_func {
 /// The array is assumed to be in standard descending-coordinates
 /// order (e.g. [z, y, x] for 3D).
 pub fn pack_into_vec<
-    T: PartialEq + Clone + Copy + std::fmt::Debug + 'static,
+	T: PartialEq + Clone + Copy + std::fmt::Debug + 'static,
     AD: Dimension,
-    PD: PixelDim + DimName,
->(
-    arr: nd::Array<VectorN<T, PD>, AD>,
+    const PD: usize,
+    >(
+    arr: nd::Array<SVector<T, PD>, AD>,
 ) -> Vec<T>
-where
-    nalgebra::DefaultAllocator: nalgebra::base::allocator::Allocator<T, PD>,
+
+// where
+//     nalgebra::DefaultAllocator: nalgebra::base::allocator::Allocator<T, PD>,
 {
     if arr.is_standard_layout() {
         let x = arr.into_raw_vec();
@@ -149,8 +155,8 @@ where
             // underneath, and is thus guaranteed to have the same layout as T.
             Vec::from_raw_parts(
                 me.as_mut_ptr() as *mut T,
-                me.len() * PD::DIM,
-                me.capacity() * PD::DIM,
+                me.len() * PD,
+                me.capacity() * PD,
             )
         }
     } else {
@@ -163,58 +169,56 @@ where
 /// The array is assumed to be in standard descending-coordinates
 /// order (e.g. [z, y, x] for 3D).
 pub fn pack_as_vec<
-    T: PartialEq + Clone + Copy + std::fmt::Debug + 'static,
+	T: PartialEq + Clone + Copy + std::fmt::Debug + 'static,
     AD: Dimension,
-    PD: PixelDim + DimName,
->(
-    arr: &nd::ArrayView<VectorN<T, PD>, AD>,
+    const PD: usize,
+    >(
+    arr: &nd::ArrayView<SVector<T, PD>, AD>,
 ) -> Vec<T>
-where
-    nalgebra::DefaultAllocator: nalgebra::base::allocator::Allocator<T, PD>,
 {
     let std_layout = arr.as_standard_layout();
     let x = std_layout.to_owned().into_raw_vec();
     Vec::from_iter(x.iter().flatten().cloned())
 }
 
-define_unpack_func!(unpack_r_image_from_vec_1d, usize, nalgebra::U1);
+define_unpack_func!(unpack_r_image_from_vec_1d, usize, U1);
 
-define_unpack_func!(unpack_rg_image_from_vec_1d, usize, nalgebra::U2);
+define_unpack_func!(unpack_rg_image_from_vec_1d, usize, U2);
 
-define_unpack_func!(unpack_rgb_image_from_vec_1d, usize, nalgebra::U3);
+define_unpack_func!(unpack_rgb_image_from_vec_1d, usize, U3);
 
-define_unpack_func!(unpack_rgba_image_from_vec_1d, usize, nalgebra::U4);
+define_unpack_func!(unpack_rgba_image_from_vec_1d, usize, U4);
 
-define_unpack_func!(unpack_r_image_from_vec_2d, (usize, usize), nalgebra::U1);
+define_unpack_func!(unpack_r_image_from_vec_2d, (usize, usize), U1);
 
-define_unpack_func!(unpack_rg_image_from_vec_2d, (usize, usize), nalgebra::U2);
+define_unpack_func!(unpack_rg_image_from_vec_2d, (usize, usize), U2);
 
-define_unpack_func!(unpack_rgb_image_from_vec_2d, (usize, usize), nalgebra::U3);
+define_unpack_func!(unpack_rgb_image_from_vec_2d, (usize, usize), U3);
 
-define_unpack_func!(unpack_rgba_image_from_vec_2d, (usize, usize), nalgebra::U4);
+define_unpack_func!(unpack_rgba_image_from_vec_2d, (usize, usize), U4);
 
 define_unpack_func!(
     unpack_r_image_from_vec_3d,
     (usize, usize, usize),
-    nalgebra::U1
+    U1
 );
 
 define_unpack_func!(
     unpack_rg_image_from_vec_3d,
     (usize, usize, usize),
-    nalgebra::U2
+    U2
 );
 
 define_unpack_func!(
     unpack_rgb_image_from_vec_3d,
     (usize, usize, usize),
-    nalgebra::U3
+    U3
 );
 
 define_unpack_func!(
     unpack_rgba_image_from_vec_3d,
     (usize, usize, usize),
-    nalgebra::U4
+    U4
 );
 
 #[cfg(test)]
