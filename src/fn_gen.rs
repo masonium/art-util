@@ -23,7 +23,7 @@ pub fn gen_dated_filenames(tag: &str, extensions: &[&str]) -> std::io::Result<Ve
         let numbered_basepath = gen_dir.join(&[basepath.clone(), idx_str].join("-"));
         let fns: Vec<_> = extensions
             .iter()
-            .map(|ext| numbered_basepath.with_extension(ext))
+            .map(|ext| numbered_basepath.with_extension(ext.trim_start_matches(".")))
             .collect();
         if fns.iter().any(|f| Path::new(f).exists()) {
             idx += 1;
