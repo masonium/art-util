@@ -8,7 +8,7 @@ mod test {
 
     #[test]
     fn test_frustum_ortho() {
-        let frustum = Frustum::from_clip_matrix(&glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0));
+        let frustum: Frustum<f64> = Frustum::from_clip_matrix(&glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0));
 
         let target_planes: Vec<_> = [
             Vector4::new(1.0, 0.0, 0.0, 1.0),
@@ -35,7 +35,7 @@ mod test {
             &Vector3::new(2.0, 0.0, -1.0),
             &Vector3::new(0.0, 1.0, 0.0),
         );
-        let frustum = Frustum::from_clip_matrix(&(glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0) * view));
+        let frustum: Frustum<f64> = Frustum::from_clip_matrix(&(glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0) * view));
 
         let target_planes: Vec<_> = [
             Vector4::new(1.0, 0.0, 0.0, -1.0),
@@ -56,8 +56,8 @@ mod test {
 
     #[test]
     fn test_frustum_perspective() {
-	let frustum = Frustum::from_clip_matrix(
-            &(glm::perspective_rh(1.0, std::f32::consts::FRAC_PI_2, 0.01, 1.0)),
+	let frustum: Frustum<f64> = Frustum::from_clip_matrix(
+            &(glm::perspective_rh(1.0, std::f64::consts::FRAC_PI_2, 0.01, 1.0)),
         );
 
         let target_planes: Vec<_> = [
