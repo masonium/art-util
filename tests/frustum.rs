@@ -1,14 +1,15 @@
 #[cfg(test)]
 mod test {
+    use art_util::Frustum;
     use assert_approx_eq::assert_approx_eq;
     use na::{Vector3, Vector4};
     use nalgebra as na;
     use nalgebra_glm as glm;
-    use art_util::Frustum;
 
     #[test]
     fn test_frustum_ortho() {
-        let frustum: Frustum<f64> = Frustum::from_clip_matrix(&glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0));
+        let frustum: Frustum<f64> =
+            Frustum::from_clip_matrix(&glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0));
 
         let target_planes: Vec<_> = [
             Vector4::new(1.0, 0.0, 0.0, 1.0),
@@ -35,7 +36,8 @@ mod test {
             &Vector3::new(2.0, 0.0, -1.0),
             &Vector3::new(0.0, 1.0, 0.0),
         );
-        let frustum: Frustum<f64> = Frustum::from_clip_matrix(&(glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0) * view));
+        let frustum: Frustum<f64> =
+            Frustum::from_clip_matrix(&(glm::ortho_rh(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0) * view));
 
         let target_planes: Vec<_> = [
             Vector4::new(1.0, 0.0, 0.0, -1.0),
@@ -56,7 +58,7 @@ mod test {
 
     #[test]
     fn test_frustum_perspective() {
-	let frustum: Frustum<f64> = Frustum::from_clip_matrix(
+        let frustum: Frustum<f64> = Frustum::from_clip_matrix(
             &(glm::perspective_rh(1.0, std::f64::consts::FRAC_PI_2, 0.01, 1.0)),
         );
 

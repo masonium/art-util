@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test {
+    use art_util::Rect;
     use na::Point2;
     use nalgebra as na;
-    use art_util::Rect;
     // use art_util::QuadTree;
 
     // fn create_qt_f32() -> QuadTree<f32> {

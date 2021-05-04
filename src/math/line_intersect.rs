@@ -1,9 +1,8 @@
-use nalgebra as na;
-pub use na::{Point2, Vector2};
-use num_traits::Zero;
-use nalgebra_glm::TMat2;
 use crate::math::Scalar;
-
+pub use na::{Point2, Vector2};
+use nalgebra as na;
+use nalgebra_glm::TMat2;
+use num_traits::Zero;
 
 pub fn refract_dir(
     incident: na::Vector2<f32>,
@@ -16,18 +15,18 @@ pub fn refract_dir(
     let sin_tr = n * (1.0 - cos_ti * cos_ti).sqrt();
     // sufficiently close to the critical angle.
     if (sin_tr - 1.0).abs() < 1e-5 {
-	return None;
+        return None;
     }
 
     // refract or reflect, depending on the angle
     let new_dir = if sin_tr > 1.0 {
-	// total internal reflection
-	incident - 2.0 * incident.dot(&normal) * normal
+        // total internal reflection
+        incident - 2.0 * incident.dot(&normal) * normal
     } else {
-	// refract at the new angle.
-	let c1 = cos_ti;
-	let c2 = (1.0 - n * n * (1.0 - c1 * c1)).sqrt();
-	n * incident + (n * c1 - c2) * normal
+        // refract at the new angle.
+        let c1 = cos_ti;
+        let c2 = (1.0 - n * n * (1.0 - c1 * c1)).sqrt();
+        n * incident + (n * c1 - c2) * normal
     };
 
     Some(new_dir)
@@ -44,35 +43,34 @@ fn inside_line_range<T: Scalar>(t: T) -> bool {
     (t.into() >= 1.0e-8) && t.into() <= (1.0 - 1.0e-8)
 }
 
-
 impl<T: Scalar> RayInt<T> {
     /// Return true iff the intersection represents a line-line
     /// intersection, rather than just a ray-ray intersection.
     #[allow(unused)]
     fn is_line_line_isect(&self) -> bool {
-	if let Self::Intersection(a, b) = self {
-	    inside_line_range(*a) && inside_line_range(*b)
-	} else {
-	    false
-	}
+        if let Self::Intersection(a, b) = self {
+            inside_line_range(*a) && inside_line_range(*b)
+        } else {
+            false
+        }
     }
 
     /// Return the t1 value if this is an intersection.
     pub fn t1(&self) -> Option<T> {
-	if let Self::Intersection(a, _) = self {
-	    Some(*a)
-	} else {
-	    None
-	}
+        if let Self::Intersection(a, _) = self {
+            Some(*a)
+        } else {
+            None
+        }
     }
 
     /// Return the t2 value if this is an intersection.
     pub fn t2(&self) -> Option<T> {
-	if let Self::Intersection(_, b) = self {
-	    Some(*b)
-	} else {
-	    None
-	}
+        if let Self::Intersection(_, b) = self {
+            Some(*b)
+        } else {
+            None
+        }
     }
 }
 
@@ -80,7 +78,7 @@ impl<T: Scalar> RayInt<T> {
 pub enum PointTest {
     Inside,
     On,
-    Outside
+    Outside,
 }
 
 /// Test where the point `p` is in relation to the oriented line defined by `(a, b)`.
@@ -95,11 +93,11 @@ pub fn orient_2d<F: Scalar>(p: Point2<F>, a: Point2<F>, b: Point2<F>) -> PointTe
     let f_sa = sa.into();
     let thresh = 1.0e-8 * (l01 * l12).into();
     if f_sa > thresh {
-	PointTest::Inside
+        PointTest::Inside
     } else if -f_sa < -thresh {
-	PointTest::Outside
+        PointTest::Outside
     } else {
-	PointTest::On
+        PointTest::On
     }
 }
 
@@ -112,7 +110,7 @@ pub fn is_degen_tri<F: Scalar>(p0: Vector2<F>, p1: Vector2<F>, p2: Vector2<F>) -
     let l12 = p12.norm();
 
     if l01.into() <= 1.0e-8 || l12.into() <= 1.0e-8 {
-	return true;
+        return true;
     }
 
     let signed_area = p01.x * p12.y - p01.y * p12.x;
@@ -121,26 +119,33 @@ pub fn is_degen_tri<F: Scalar>(p0: Vector2<F>, p1: Vector2<F>, p2: Vector2<F>) -
 
 /// Return the intersection point of two rays, each implicitly defined
 /// by two points, assuming any finite t's are valid.
-pub fn implicit_ray_intersect_2d<F: Scalar>(a0: Point2<F>, a1: Point2<F>, b0: Point2<F>, b1: Point2<F>) -> RayInt<F> {
+pub fn implicit_ray_intersect_2d<F: Scalar>(
+    a0: Point2<F>,
+    a1: Point2<F>,
+    b0: Point2<F>,
+    b1: Point2<F>,
+) -> RayInt<F> {
     let da: Vector2<F> = a1 - a0;
     let db = b1.coords - b0.coords;
     let zero = <F as Zero>::zero();
 
     // The matrix inversion can work even in cases that we would call
     // degenerate, so it's important to check for degenerate cases first.
-    if is_degen_tri(a0.coords, a1.coords, b0.coords) && is_degen_tri(a0.coords, a1.coords, b1.coords) {
-	RayInt::Colinear
+    if is_degen_tri(a0.coords, a1.coords, b0.coords)
+        && is_degen_tri(a0.coords, a1.coords, b1.coords)
+    {
+        RayInt::Colinear
     } else if is_degen_tri::<F>(Vector2::new(zero, zero), da, db) {
-	RayInt::Parallel
+        RayInt::Parallel
     } else {
-	let m: TMat2<F> = TMat2::new(da.x, -db.x, da.y, -db.y);
-	match m.try_inverse() {
-	    Some(inv) => {
-		let t = inv * (b0 - a0).xy();
-		RayInt::Intersection(t.x, t.y)
-	    }
-	    None => RayInt::Parallel,
-	}
+        let m: TMat2<F> = TMat2::new(da.x, -db.x, da.y, -db.y);
+        match m.try_inverse() {
+            Some(inv) => {
+                let t = inv * (b0 - a0).xy();
+                RayInt::Intersection(t.x, t.y)
+            }
+            None => RayInt::Parallel,
+        }
     }
 }
 
@@ -149,16 +154,21 @@ pub fn implicit_ray_intersect_2d<F: Scalar>(a0: Point2<F>, a1: Point2<F>, b0: Po
 /// appropriate.
 ///
 /// z-values are ignored.
-pub fn line_intersect_2d<F: Scalar>(a0: Point2<F>, a1: Point2<F>, b0: Point2<F>, b1: Point2<F>) -> RayInt<F> {
+pub fn line_intersect_2d<F: Scalar>(
+    a0: Point2<F>,
+    a1: Point2<F>,
+    b0: Point2<F>,
+    b1: Point2<F>,
+) -> RayInt<F> {
     let isect = implicit_ray_intersect_2d(a0, a1, b0, b1);
     match isect {
-	RayInt::Intersection(ta, tb) => {
-	    if inside_line_range(ta) && inside_line_range(tb) {
-		RayInt::Intersection(ta, tb)
-	    } else {
-		RayInt::Parallel
-	    }
-	}
-	_ => isect,
+        RayInt::Intersection(ta, tb) => {
+            if inside_line_range(ta) && inside_line_range(tb) {
+                RayInt::Intersection(ta, tb)
+            } else {
+                RayInt::Parallel
+            }
+        }
+        _ => isect,
     }
- }
+}

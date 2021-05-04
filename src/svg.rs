@@ -2,12 +2,17 @@
 use itertools::Itertools;
 use nalgebra as na;
 use std::fmt::Display;
-use svg::node::element::{Group, Polyline, Polygon, Line};
+use svg::node::element::{Group, Line, Polygon, Polyline};
 
-pub fn line<F: na::Scalar>(x1: F, y1: F, x2: F, y2: F) -> Line 
-    where svg::node::Value: std::convert::From<F>
+pub fn line<F: na::Scalar>(x1: F, y1: F, x2: F, y2: F) -> Line
+where
+    svg::node::Value: std::convert::From<F>,
 {
-    Line::new().set("x1", x1).set("y1", y1).set("x2", x2).set("y2", y2)
+    Line::new()
+        .set("x1", x1)
+        .set("y1", y1)
+        .set("x2", x2)
+        .set("y2", y2)
 }
 
 /// Create one or more polyine-nodes from a list of points, capping

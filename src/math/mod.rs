@@ -1,9 +1,11 @@
-pub mod types;
-pub mod line_intersect;
 pub mod clipping;
+pub mod line_intersect;
 pub mod root_finder;
+pub mod types;
 
-pub use types::{Rect, Scalar, ToArray};
-pub use line_intersect::{refract_dir, line_intersect_2d, implicit_ray_intersect_2d, orient_2d, PointTest};
-pub use clipping::{ClipResult, clip_line, clip_polyline};
+pub use clipping::{clip_line, clip_polyline, ClipResult};
+pub use line_intersect::{
+    implicit_ray_intersect_2d, line_intersect_2d, orient_2d, refract_dir, PointTest,
+};
 pub use root_finder::find_root;
+pub use types::{Rect, Scalar, ToArray};
