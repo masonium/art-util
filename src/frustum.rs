@@ -30,7 +30,7 @@ pub enum ClipResultPartial {
     Suffix,
 
     /// Neither point is in, but the segment intersects.
-    Infix
+    Infix,
 }
 
 /// Result from clipping a line segment against a `Frustum`.
@@ -112,12 +112,16 @@ impl<F: na::RealField> Frustum<F> {
             return ClipResult::Inside(*p0, *p1);
         }
         // Get the intersections for the line segment across all planes.
-        let mut isects: Vec<F> = (0..6).filter_map(|i| plane_segment_directed_intersection(&self.planes[i], p0, p1))
-            .filter_map(|t| if t >= F::zero() && t <= F::one() {
-		Some(t)
-	    } else {
-		None
-	    }).collect();
+        let mut isects: Vec<F> = (0..6)
+            .filter_map(|i| plane_segment_directed_intersection(&self.planes[i], p0, p1))
+            .filter_map(|t| {
+                if t >= F::zero() && t <= F::one() {
+                    Some(t)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         let cmp = |a: &F, b: &F| {
             if a < b {
@@ -125,10 +129,10 @@ impl<F: na::RealField> Frustum<F> {
             } else if a > b {
                 Ordering::Greater
             } else {
-		Ordering::Equal
-	    }
+                Ordering::Equal
+            }
         };
-	isects.sort_by(cmp);
+        isects.sort_by(cmp);
 
         // If the first point is inside, we can find the first
         // intersection and use that as the other clip point.
@@ -144,23 +148,30 @@ impl<F: na::RealField> Frustum<F> {
             return ClipResult::Partial(ClipResultPartial::Suffix, p0 + (p1 - p0) * max_t, *p1);
         }
 
-	// If both points are outside, then we need to find the
-	// intersection points that are on the frustum.
-	let eps = na::convert(1e-5);
-	let points_on_frustum: Vec<_> = isects.iter().filter_map(|t| {
-	    let p = p0 + (p1 - p0) * *t;
-	    if self.is_point_in_or_on(&p, eps) {
-		Some(p)
-	    } else {
-		None
-	    }
-	}).collect();
+        // If both points are outside, then we need to find the
+        // intersection points that are on the frustum.
+        let eps = na::convert(1e-5);
+        let points_on_frustum: Vec<_> = isects
+            .iter()
+            .filter_map(|t| {
+                let p = p0 + (p1 - p0) * *t;
+                if self.is_point_in_or_on(&p, eps) {
+                    Some(p)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-	match points_on_frustum.len() {
-	    2 => ClipResult::Partial(ClipResultPartial::Infix, points_on_frustum[0], points_on_frustum[1]),
-	    0 | 1 => ClipResult::Outside,
-	    _ => panic!("Too many on-frustum intersections")
-	}
+        match points_on_frustum.len() {
+            2 => ClipResult::Partial(
+                ClipResultPartial::Infix,
+                points_on_frustum[0],
+                points_on_frustum[1],
+            ),
+            0 | 1 => ClipResult::Outside,
+            _ => panic!("Too many on-frustum intersections"),
+        }
     }
 
     /// Return the desired frustum plane.
